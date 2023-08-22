@@ -1,0 +1,21 @@
+{
+  "name": "spotifytoyoutube",
+  "version": "1.0.0",
+  "description": "transfer spotify playlist to youtube",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "Gurbeer Singh Sokhi",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "passport": "^0.6.0",
+    "passport-google-oauth2": "^0.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
