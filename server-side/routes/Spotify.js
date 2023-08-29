@@ -8,10 +8,11 @@ const redirect_uri_auth = "http://localhost:5000/profile";
 const querystring = require("querystring");
 const axios = require("axios");
 const Spotify = index.Spotify;
+const env = process.env;
 
 const scope = "user-read-private user-read-email";
-const client_id = process.env.SPOTIFY_CLIENT_ID;
-const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+const client_id = env.SPOTIFY_CLIENT_ID;
+const client_secret = env.SPOTIFY_CLIENT_SECRET;
 
 const generateRandomString = (length) => {
   let text = "";
@@ -42,17 +43,36 @@ router.route("/login").get(async (req, res) => {
 router.route("/account").get(async (req, res) => {
   try {
     let AuthResponse = await Spotify.auth(redirect_uri, req.query.code);
-    if (AuthResponse == 200) {
-      console.log("SUCCESS", AuthResponse);
+    if (AuthResponse.status == 200) {
+      env.refresh_token = AuthResponse.data.refresh_token;
+      res.redirect("/profile");
     } else {
-      console.log("fail");
+      res.redirect("/#" + querystring.stringify({ error: AuthResponse }));
     }
-    res.send("account");
   } catch (e) {
     console.log(e.message);
   }
 });
 
-router.route("/profile").get(async (req, res) => {});
+router.route("/profile").get(async (req, res) => {
+  res.send("profile");
+});
+
+router.route("/refresh_token").get(async (req, res) => {
+  try {
+    let refresh_token = req.query.refresh_token;
+    let access_token = await Spotify.RefreshToken(refresh_token);
+    console.log(
+      "returned access_token",
+      access_token.json().then((data) => {
+        console.log("data", data);
+        env.access_token = data.access_token;
+      })
+    );
+    res.send(access_token);
+  } catch (e) {
+    console.log(e);
+  }
+});
 
 module.exports = router;
