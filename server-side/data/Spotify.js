@@ -10,6 +10,7 @@ let refresh_token = env.refresh_token;
 // let access_token;
 const formData = new FormData();
 const fetch = require("node-fetch");
+const SpotifyWebApi = require("spotify-web-api-node");
 
 const auth = async (redirect_uri, code) => {
   try {
@@ -35,13 +36,33 @@ const auth = async (redirect_uri, code) => {
     } else {
       return "invalid_token";
     }
+
+    // const spotifyApi = new SpotifyWebApi({
+    //   redirectUri: redirect_uri,
+    //   clientId: client_id,
+    //   clientSecret: client_secret,
+    // });
+
+    // spotifyApi
+    //   .authorizationCodeGrant(code)
+    //   .then((data) => {
+    //     return {
+    //       accessToken: data.body.access_token,
+    //       refreshToken: data.body.refresh_token,
+    //       expiresIn: data.body.expires_in,
+    //       status: 200,
+    //     };
+    //   })
+    //   .catch((err) => {
+    //     return { status: 400 };
+    //   });
   } catch (e) {
     console.log(e);
   }
 };
 
-const RefreshToken = async () => {
-  console.log("refresh token ", env.refresh_token);
+const RefreshToken = async (refresh_token) => {
+  // console.log("refresh token ", env.refresh_token);
   try {
     let authOptions = {
       method: "POST",
@@ -51,7 +72,7 @@ const RefreshToken = async () => {
           new Buffer.from(client_id + ":" + client_secret).toString("base64"),
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: `grant_type=refresh_token&refresh_token=${env.refresh_token}`,
+      body: `grant_type=refresh_token&refresh_token=${refresh_token}`,
     };
 
     let new_token = await fetch(
