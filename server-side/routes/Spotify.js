@@ -1,28 +1,45 @@
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config({
-    path: "C:\\Users\\gurbe\\Downloads\\Project\\SpotifytoYoutube\\SpotifytoYoutube\\server-side\\.env",
-  });
-}
+require("dotenv").config({
+  path: "C:\\Users\\gurbe\\Downloads\\Project\\SpotifytoYoutube\\SpotifytoYoutube\\server-side\\.env",
+});
+
 const express = require("express");
+const session = require("express-session");
 const router = express.Router();
 const index = require("../data/index");
 const login = index.login;
 const bodyParser = require("body-parser");
 const redirect_uri = "http://localhost:3000";
-const redirect_uri_auth = "http://localhost:5000/profile";
 const querystring = require("querystring");
 const axios = require("axios");
 const Spotify = index.Spotify;
+const passport = require("passport");
+
+router.use(
+  session({
+    secret: "secret",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
+router.use(passport.initialize());
+router.use(passport.session());
 
 const cors = require("cors");
 const SpotifyWebApi = require("spotify-web-api-node");
 const path = require("path");
+const { nextTick } = require("process");
+require("../auth");
 
 router.use(cors());
 router.use(bodyParser.json());
 const scope = "user-read-private user-read-email";
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+
+const isLoggedIn = (req, res, next) => {
+  req.user ? next() : res.sendStatus(401);
+};
 
 const generateRandomString = (length) => {
   let text = "";
@@ -35,8 +52,10 @@ const generateRandomString = (length) => {
   return text;
 };
 
+let access_token = 0;
 const state = generateRandomString(16);
 
+let count = 0;
 router.route("/login").get(async (req, res) => {
   try {
     res.redirect(
@@ -54,16 +73,19 @@ router.route("/login").get(async (req, res) => {
   }
 });
 
-router.route("/account").post(async (req, res) => {
+router.route("/account").get(async (req, res) => {
   try {
-    console.log("in account", req.body.code);
-    let code = req.body.code;
-
-    if (req.body.code) {
-      console.log("in account");
+    let code = req.query.code;
+    if (req.query.code) {
       let AuthResponse = await Spotify.auth(redirect_uri, code);
       if (AuthResponse?.status == 200) {
-        res.json({
+        access_token = AuthResponse.data.access_token;
+        authres = {
+          accessToken: AuthResponse.data.access_token,
+          refreshToken: AuthResponse.data.refresh_token,
+          expiresIn: AuthResponse.data.expires_in,
+        };
+        return res.json({
           accessToken: AuthResponse.data.access_token,
           refreshToken: AuthResponse.data.refresh_token,
           expiresIn: AuthResponse.data.expires_in,
@@ -117,5 +139,41 @@ router.route("/refresh_token").get(async (req, res) => {
     console.log(e);
   }
 });
+
+router.route("/playlist/:playlistId").get(async (req, res) => {
+  try {
+    let playlistId = req.params.playlistId;
+    let playlist = await Spotify.getPlaylist(playlistId, access_token);
+    if (playlist.status == 200) {
+      console.log(playlist.data);
+      res.json({
+        tracks: playlist.data.tracks.items,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+router
+  .route("/ytlogin")
+  .get(passport.authenticate("google", { scope: ["email", "profile"] }));
+
+router.route("/ytcallback").get(
+  passport.authenticate("google", {
+    successReturnToOrRedirect: "/",
+    failureRedirect: "/failure",
+  })
+);
+
+router.route("/failure").get(async (req, res) => {
+  res.send("something went wrong");
+});
+
+router.route("/").get(isLoggedIn, async (req, res) => {
+  res.json({ access_token: req.user.accessToken });
+});
+
+router.route("createPlaylist").post(async (req, res) => {});
 
 module.exports = router;

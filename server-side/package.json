@@ -17,6 +17,7 @@
     "express-session": "^1.17.3",
     "fetch": "^1.1.0",
     "formdata": "^0.10.4",
+    "googleapis": "^126.0.1",
     "node-fetch": "^2.7.0",
     "passport": "^0.6.0",
     "passport-google-oauth2": "^0.2.0",

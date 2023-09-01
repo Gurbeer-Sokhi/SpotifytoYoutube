@@ -12,13 +12,16 @@ const formData = new FormData();
 const fetch = require("node-fetch");
 const SpotifyWebApi = require("spotify-web-api-node");
 
+let tracks;
+
 const auth = async (redirect_uri, code) => {
   try {
     const spotifyResponse = await axios.post(
       "https://accounts.spotify.com/api/token",
       querystring.stringify({
-        code: code,
         grant_type: "authorization_code",
+        code: code,
+
         redirect_uri: redirect_uri,
       }),
       {
@@ -79,11 +82,45 @@ const RefreshToken = async (refresh_token) => {
       "https://accounts.spotify.com/api/token",
       authOptions
     );
-    // console.log(new_token.data);
     return new_token;
   } catch (error) {
     console.log(error);
   }
 };
 
-module.exports = { auth, RefreshToken };
+const getPlaylist = async (playlistId, access_token) => {
+  try {
+    let playlist = await axios.get(
+      `https://api.spotify.com/v1/playlists/${playlistId}`,
+      {
+        headers: {
+          Authorization: "Bearer " + access_token,
+        },
+      }
+    );
+    let tracks = getTracksInfo(playlist.data.tracks.items);
+    return playlist;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+const getTracksInfo = (trackList) => {
+  let Tracks = [];
+  let number = 0;
+  let artist = [];
+  trackList.forEach((element) => {
+    Tracks.push({
+      id: number,
+      artist: element.track.artists.map((e) => {
+        return e.name;
+      }),
+      name: element.track.name,
+    });
+    number++;
+  });
+
+  return Tracks;
+};
+
+module.exports = { auth, RefreshToken, getPlaylist };

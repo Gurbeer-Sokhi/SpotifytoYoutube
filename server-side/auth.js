@@ -1,6 +1,10 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth2").Strategy;
-require("dotenv").config();
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config({
+    path: "C:\\Users\\gurbe\\Downloads\\Project\\SpotifytoYoutube\\SpotifytoYoutube\\server-side\\.env",
+  });
+}
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -10,11 +14,15 @@ passport.use(
     {
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/protected",
+      callbackURL: "http://localhost:5000/ytcallback",
       passReqToCallback: true,
     },
     function (request, accessToken, refreshToken, profile, done) {
-      return done(err, profile);
+      return done(null, {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        profile: profile,
+      });
     }
   )
 );

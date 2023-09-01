@@ -9,22 +9,21 @@ export default function useAuth(code) {
   useEffect(() => {
     if (!code) return;
     axios
-      .post(`http://localhost:5000/account`, { code })
+      .get(`http://localhost:5000/account?code=${code}`)
       .then((res) => {
         window.history.pushState({}, null, "/");
-        console.log(res.data);
         setAccessToken(res.data.accessToken);
         setRefreshToken(res.data.refreshToken);
         setExpiresIn(res.data.expiresIn);
-        console.log(refreshToken);
       })
       .catch((e) => {
         console.log(e);
+        window.location = "/";
       });
-  }, []);
+  }, [code]);
 
   useEffect(() => {
-    if (!refreshToken || !expiresIn) return;
+    if (!refreshToken) return;
     const interval = setInterval(() => {
       axios
         .get(
@@ -33,7 +32,7 @@ export default function useAuth(code) {
         .then((res) => {
           window.history.pushState({}, null, "/");
           setAccessToken(res.data.accessToken);
-          setExpiresIn(61);
+          setExpiresIn(res.data.expiresIn);
         })
         .catch(() => {
           window.location = "/";
@@ -43,5 +42,5 @@ export default function useAuth(code) {
     }, (expiresIn - 60) * 1000);
   }, [refreshToken, expiresIn]);
 
-  return accessToken;
+  return <div>{accessToken}</div>;
 }
