@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function DashBoard({ code }) {
+  console.log("in Dash");
   const accessToken = useAuth(code);
 
   // const generate_token = async () => {

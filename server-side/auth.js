@@ -17,12 +17,8 @@ passport.use(
       callbackURL: "http://localhost:5000/ytcallback",
       passReqToCallback: true,
     },
-    function (request, accessToken, refreshToken, profile, done) {
-      return done(null, {
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        profile: profile,
-      });
+    function (request, accessToken, refreshToken, profile, params, done) {
+      return done(null, profile);
     }
   )
 );

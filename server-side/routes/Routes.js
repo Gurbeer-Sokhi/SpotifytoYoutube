@@ -12,34 +12,16 @@ const redirect_uri = "http://localhost:3000";
 const querystring = require("querystring");
 const axios = require("axios");
 const Spotify = index.Spotify;
-const passport = require("passport");
-
-router.use(
-  session({
-    secret: "secret",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-  })
-);
-router.use(passport.initialize());
-router.use(passport.session());
+const Youtube = index.Youtube;
 
 const cors = require("cors");
 const SpotifyWebApi = require("spotify-web-api-node");
-const path = require("path");
-const { nextTick } = require("process");
-require("../auth");
 
 router.use(cors());
 router.use(bodyParser.json());
 const scope = "user-read-private user-read-email";
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
-
-const isLoggedIn = (req, res, next) => {
-  req.user ? next() : res.sendStatus(401);
-};
 
 const generateRandomString = (length) => {
   let text = "";
@@ -76,45 +58,44 @@ router.route("/login").get(async (req, res) => {
 router.route("/account").get(async (req, res) => {
   try {
     let code = req.query.code;
-    if (req.query.code) {
-      let AuthResponse = await Spotify.auth(redirect_uri, code);
-      if (AuthResponse?.status == 200) {
-        access_token = AuthResponse.data.access_token;
-        authres = {
-          accessToken: AuthResponse.data.access_token,
-          refreshToken: AuthResponse.data.refresh_token,
-          expiresIn: AuthResponse.data.expires_in,
-        };
-        return res.json({
-          accessToken: AuthResponse.data.access_token,
-          refreshToken: AuthResponse.data.refresh_token,
-          expiresIn: AuthResponse.data.expires_in,
-        });
-      } else {
-        res.sendStatus(400);
-      }
-    }
-
-    // console.log("id", client_id);
-    // const spotifyApi = new SpotifyWebApi({
-    //   redirectUri: redirect_uri,
-    //   clientId: client_id,
-    //   clientSecret: client_secret,
-    // });
-
-    // spotifyApi
-    //   .authorizationCodeGrant(code)
-    //   .then((data) => {
-    //     console.log(data.body);
-    //     res.json({
-    //       accessToken: data.body.access_token,
-    //       refreshToken: data.body.refresh_token,
-    //       expiresIn: data.body.expires_in,
+    // if (req.query.code) {
+    //   let AuthResponse = await Spotify.auth(redirect_uri, code);
+    //   if (AuthResponse?.status == 200) {
+    //     access_token = AuthResponse.data.access_token;
+    //     authres = {
+    //       accessToken: AuthResponse.data.access_token,
+    //       refreshToken: AuthResponse.data.refresh_token,
+    //       expiresIn: AuthResponse.data.expires_in,
+    //     };
+    //     return res.json({
+    //       accessToken: AuthResponse.data.access_token,
+    //       refreshToken: AuthResponse.data.refresh_token,
+    //       expiresIn: AuthResponse.data.expires_in,
     //     });
-    //   })
-    //   .catch((err) => {
-    //     console.log(err.message);
-    //   });
+    //   } else {
+    //     res.sendStatus(400);
+    //   }
+    // }
+
+    console.log("id", client_id);
+    const spotifyApi = new SpotifyWebApi({
+      redirectUri: redirect_uri,
+      clientId: client_id,
+      clientSecret: client_secret,
+    });
+
+    await spotifyApi
+      .authorizationCodeGrant(code)
+      .then((data) => {
+        res.json({
+          accessToken: data.body.access_token,
+          refreshToken: data.body.refresh_token,
+          expiresIn: data.body.expires_in,
+        });
+      })
+      .catch((err) => {
+        console.log(err.message);
+      });
   } catch (e) {
     console.log(e);
   }
@@ -122,6 +103,7 @@ router.route("/account").get(async (req, res) => {
 
 router.route("/refresh_token").get(async (req, res) => {
   try {
+    console.log("in refresh");
     let refresh_token = req.query.refresh_token;
     let access_token = await Spotify.RefreshToken(refresh_token);
     console.log(
@@ -154,26 +136,5 @@ router.route("/playlist/:playlistId").get(async (req, res) => {
     console.log(e);
   }
 });
-
-router
-  .route("/ytlogin")
-  .get(passport.authenticate("google", { scope: ["email", "profile"] }));
-
-router.route("/ytcallback").get(
-  passport.authenticate("google", {
-    successReturnToOrRedirect: "/",
-    failureRedirect: "/failure",
-  })
-);
-
-router.route("/failure").get(async (req, res) => {
-  res.send("something went wrong");
-});
-
-router.route("/").get(isLoggedIn, async (req, res) => {
-  res.json({ access_token: req.user.accessToken });
-});
-
-router.route("createPlaylist").post(async (req, res) => {});
 
 module.exports = router;

@@ -8,6 +8,7 @@ export default function useAuth(code) {
 
   useEffect(() => {
     if (!code) return;
+    console.log("in useauth");
     axios
       .get(`http://localhost:5000/account?code=${code}`)
       .then((res) => {
@@ -23,7 +24,7 @@ export default function useAuth(code) {
   }, [code]);
 
   useEffect(() => {
-    if (!refreshToken) return;
+    if (!refreshToken || !expiresIn) return;
     const interval = setInterval(() => {
       axios
         .get(
@@ -37,10 +38,12 @@ export default function useAuth(code) {
         .catch(() => {
           window.location = "/";
         });
-
-      return () => clearInterval(interval);
     }, (expiresIn - 60) * 1000);
+    return () => {
+      clearInterval(interval);
+      console.log("return interval");
+    };
   }, [refreshToken, expiresIn]);
 
-  return <div>{accessToken}</div>;
+  return accessToken;
 }
