@@ -5,7 +5,6 @@ import { useNavigate, redirect } from "react-router-dom";
 import Login from "./Components/Login";
 import DashBoard from "./Components/DashBoard";
 import useAuth from "./Components/useAuth";
-import Temp from "./Temp";
 
 function App() {
   const code = new URLSearchParams(window.location.search).get("code");
