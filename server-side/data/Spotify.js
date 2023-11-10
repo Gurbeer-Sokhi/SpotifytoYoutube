@@ -99,7 +99,7 @@ const getPlaylist = async (playlistId, access_token) => {
       }
     );
     let tracks = getTracksInfo(playlist.data.tracks.items);
-    return playlist;
+    return { playlist, tracks };
   } catch (e) {
     console.log(e);
   }

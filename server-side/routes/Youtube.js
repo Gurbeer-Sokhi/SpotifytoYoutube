@@ -37,15 +37,18 @@ const cors = require("cors");
 router.use(cors());
 router.use(bodyParser.json());
 
-router
-  .route("/ytlogin")
-  .get(
-    passport.authenticate("google", {
-      scope: ["email", "profile"],
-      accessType: "offline",
-      prompt: "consent",
-    })
-  );
+router.route("/ytlogin").get(
+  passport.authenticate("google", {
+    scope: [
+      "email",
+      "profile",
+      "https://www.googleapis.com/auth/youtube",
+      "https://www.googleapis.com/auth/youtube.force-ssl",
+    ],
+    accessType: "offline",
+    prompt: "consent",
+  })
+);
 
 router.route("/ytcallback").get(
   passport.authenticate("google", {
@@ -72,9 +75,28 @@ router.route("/createPlaylist").post(async (req, res) => {
       req.body.accessToken
     );
 
-    console.log(Playlist);
+    console.log(Playlist.data);
+    res.json(Playlist.data);
   } catch (e) {
     console.log(e);
+  }
+});
+
+router.route("/transfer").get(async (req, res) => {
+  try {
+    let YaccessToken = req.body.YaccessToken;
+    let SaccessToken = req.body.SaccessToken;
+    let YoutubePlaylistId = req.body.YoutubePlaylistId;
+    let SpotifyPlaylistId = req.body.SpotifyPlaylistId;
+    let transfered = await Youtube.addSongs(
+      YoutubePlaylistId,
+      SpotifyPlaylistId,
+      YaccessToken,
+      SaccessToken
+    );
+    return transfered.data;
+  } catch (error) {
+    console.log(error);
   }
 });
 module.exports = router;

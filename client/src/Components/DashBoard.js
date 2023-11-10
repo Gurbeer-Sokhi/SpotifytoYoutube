@@ -13,5 +13,5 @@ export default function DashBoard({ code }) {
   //   console.log("access_token", access_token);
   // };
 
-  return <div>{accessToken}</div>;
+  return <div>Access Token:{accessToken}</div>;
 }
